@@ -9,7 +9,7 @@
     <packaging>war</packaging>
 
     <properties>
-        <version.thorntail>2.2.0.Final</version.thorntail>
+        <version.wildfly.swarm>2.2.0.Final</version.wildfly.swarm>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -17,44 +17,60 @@
         <docker.maven.plugin.version>0.27.1</docker.maven.plugin.version>
         <docker.from>jboss/base-jdk:8</docker.from>
         <docker.assemblyDescriptorRef>artifact</docker.assemblyDescriptorRef>
-        <docker.image>tstrelar/swarm-sample:${project.version}</docker.image>
+        <docker.image.base>tstrelar/hollow-base:LATEST</docker.image.base>
+        <docker.image.app>tstrelar/demo-app:${project.version}</docker.image.app>
         <docker.base.dir>/opt/swarm</docker.base.dir>
-        <docker.host.address>localhost</docker.host.address>
-        <swarm.port>8080</swarm.port>
+        <docker.host.address>127.0.0.1</docker.host.address>
+        <!--<swarm.port>8080</swarm.port>-->
     </properties>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>io.thorntail</groupId>
-                <artifactId>bom-all</artifactId>
-                <version>${version.thorntail}</version>
+                <artifactId>bom</artifactId>
+                <version>${version.wildfly.swarm}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>io.thorntail.servers</groupId>
+            <artifactId>microprofile</artifactId>
+            <version>${version.wildfly.swarm}</version>
+        </dependency>
+    </dependencies>
+
+
     <build>
-        <finalName>${artifactId}</finalName>
+        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
-                <groupId>org.wildfly.swarm</groupId>
-                <artifactId>wildfly-swarm-plugin</artifactId>
+                <groupId>io.thorntail</groupId>
+                <artifactId>thorntail-maven-plugin</artifactId>
+                <version>${version.wildfly.swarm}</version>
                 <configuration>
-                    <mainClass>org.wildfly.swarm.examples.netflix.ribbon.frontend.Main</mainClass>
                     <properties>
+                        <swarm.bind.address>127.0.0.1</swarm.bind.address>
                         <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                     </properties>
                 </configuration>
                 <executions>
                     <execution>
+                        <id>package</id>
                         <goals>
                             <goal>package</goal>
                         </goals>
+                        <configuration>
+                            <hollow>true</hollow>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -62,21 +78,14 @@
                 <configuration>
                     <images>
                         <image>
-                            <alias>demoswarm</alias>
-                            <name>${docker.image}</name>
+                            <alias>hollowswarm</alias>
+                            <name>${docker.image.base}</name>
                             <build>
                                 <from>${docker.from}</from>
                                 <maintainer>tstrelar@gmail.com</maintainer>
                                 <ports>
                                     <port>8080</port>
                                 </ports>
-                                <entryPoint>
-                                    <exec>
-                                        <arg>java</arg>
-                                        <arg>-jar</arg>
-                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}-thorntail.jar</arg>
-                                    </exec>
-                                </entryPoint>
                                 <assembly>
                                     <inline>
                                         <dependencySets>
@@ -92,10 +101,43 @@
                                     <basedir>${docker.base.dir}</basedir>
                                 </assembly>
                             </build>
+                        </image>
+                        <image>
+                            <alias>demoswarm</alias>
+                            <name>${docker.image.app}</name>
+                            <build>
+                                <from>${docker.image.base}</from>
+                                <maintainer>tstrelar@gmail.com</maintainer>
+                                <ports>
+                                    <port>8080</port>
+                                </ports>
+                                <entryPoint>
+                                    <exec>
+                                        <arg>java</arg>
+                                        <arg>-jar</arg>
+                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}-hollow-thorntail.jar</arg>
+                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}.war</arg>
+                                    </exec>
+                                </entryPoint>
+                                <assembly>
+                                    <inline>
+                                        <dependencySets>
+                                            <dependencySet>
+                                                <useProjectAttachments>true</useProjectAttachments>
+                                                <includes>
+                                                    <include>${project.groupId}:${project.artifactId}:war</include>
+                                                </includes>
+                                            </dependencySet>
+                                        </dependencySets>
+                                    </inline>
+                                    <user>jboss:jboss:jboss</user>
+                                    <basedir>${docker.base.dir}</basedir>
+                                </assembly>
+                            </build>
                             <run>
                                 <ports>
                                     <!-- Map container port 8080 to a dynamical port -->
-                                    <port>${swarm.port}:8080</port>
+                                    <port>swarm.port:8080</port>
                                 </ports>
                                 <wait>
                                     <http>
@@ -117,34 +159,5 @@
         </plugins>
     </build>
 
-    <dependencies>
 
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>jaxrs</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>microprofile-health</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>microprofile-restclient</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>microprofile-metrics</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>camel-jackson</artifactId>
-            <!--</dependency><dependency>-->
-            <!--<groupId>io.thorntail</groupId>-->
-            <!--<artifactId>topology-consul</artifactId>-->
-        </dependency>
-        <dependency>
-            <groupId>io.thorntail</groupId>
-            <artifactId>jpa</artifactId>
-        </dependency>
-    </dependencies>
 </project>
