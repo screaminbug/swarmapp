@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>hr.tstrelar</groupId>
     <artifactId>swarm-app</artifactId>
     <name>Thorntail Example</name>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.14-SNAPSHOT</version>
     <packaging>war</packaging>
+
+    <!-- Deploy with, for example: mvn release:update-versions clean package docker:build docker:start -Ddocker.follow -->
+    <!-- Version will be reflected in the resulting image -->
 
     <properties>
         <version.wildfly.swarm>2.2.0.Final</version.wildfly.swarm>
@@ -15,13 +17,12 @@
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <docker.maven.plugin.version>0.27.1</docker.maven.plugin.version>
-        <docker.from>jboss/base-jdk:8</docker.from>
+        <docker.from>fabric8/java-jboss-openjdk8-jdk:1.4.0</docker.from>
         <docker.assemblyDescriptorRef>artifact</docker.assemblyDescriptorRef>
-        <docker.image.base>tstrelar/hollow-base:LATEST</docker.image.base>
         <docker.image.app>tstrelar/demo-app:${project.version}</docker.image.app>
         <docker.base.dir>/opt/swarm</docker.base.dir>
         <docker.host.address>127.0.0.1</docker.host.address>
-        <!--<swarm.port>8080</swarm.port>-->
+        <swarm.port>8080</swarm.port>
     </properties>
 
     <dependencyManagement>
@@ -44,7 +45,6 @@
         </dependency>
     </dependencies>
 
-
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -54,7 +54,7 @@
                 <version>${version.wildfly.swarm}</version>
                 <configuration>
                     <properties>
-                        <swarm.bind.address>127.0.0.1</swarm.bind.address>
+                        <swarm.bind.address>0.0.0.0</swarm.bind.address>
                         <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                     </properties>
                 </configuration>
@@ -70,7 +70,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -78,20 +77,28 @@
                 <configuration>
                     <images>
                         <image>
-                            <alias>hollowswarm</alias>
-                            <name>${docker.image.base}</name>
+                            <alias>demoswarm</alias>
+                            <name>${docker.image.app}</name>
                             <build>
                                 <from>${docker.from}</from>
                                 <maintainer>tstrelar@gmail.com</maintainer>
                                 <ports>
                                     <port>8080</port>
                                 </ports>
+                                <entryPoint>
+                                        <!--https://developers.redhat.com/blog/2017/03/14/java-inside-docker/-->
+                                        <!-- https://github.com/fabric8io-images/java/blob/master/images/jboss/openjdk8/jdk/run-java.sh#L162-L175  -->
+                                        <arg>/deployments/run-java.sh</arg>
+                                        <!-- thin application -->
+                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}.war</arg>
+                                </entryPoint>
                                 <assembly>
                                     <inline>
                                         <dependencySets>
                                             <dependencySet>
                                                 <useProjectAttachments>true</useProjectAttachments>
                                                 <includes>
+                                                    <include>${project.groupId}:${project.artifactId}:war</include>
                                                     <include>${project.groupId}:${project.artifactId}:jar</include>
                                                 </includes>
                                             </dependencySet>
@@ -101,47 +108,19 @@
                                     <basedir>${docker.base.dir}</basedir>
                                 </assembly>
                             </build>
-                        </image>
-                        <image>
-                            <alias>demoswarm</alias>
-                            <name>${docker.image.app}</name>
-                            <build>
-                                <from>${docker.image.base}</from>
-                                <maintainer>tstrelar@gmail.com</maintainer>
-                                <ports>
-                                    <port>8080</port>
-                                </ports>
-                                <entryPoint>
-                                    <exec>
-                                        <arg>java</arg>
-                                        <arg>-jar</arg>
-                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}-hollow-thorntail.jar</arg>
-                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}.war</arg>
-                                    </exec>
-                                </entryPoint>
-                                <assembly>
-                                    <inline>
-                                        <dependencySets>
-                                            <dependencySet>
-                                                <useProjectAttachments>true</useProjectAttachments>
-                                                <includes>
-                                                    <include>${project.groupId}:${project.artifactId}:war</include>
-                                                </includes>
-                                            </dependencySet>
-                                        </dependencySets>
-                                    </inline>
-                                    <user>jboss:jboss:jboss</user>
-                                    <basedir>${docker.base.dir}</basedir>
-                                </assembly>
-                            </build>
                             <run>
+                                <env>
+                                    <!-- https://developers.redhat.com/blog/2017/03/14/java-inside-docker/ -->
+                                    <JAVA_APP_JAR>${docker.base.dir}/${project.artifactId}-${project.version}-hollow-thorntail.jar</JAVA_APP_JAR>
+                                    <AB_OFF>true</AB_OFF>
+                                </env>
                                 <ports>
                                     <!-- Map container port 8080 to a dynamical port -->
                                     <port>swarm.port:8080</port>
                                 </ports>
                                 <wait>
                                     <http>
-                                        <url>http://${docker.host.address}:${swarm.port}</url>
+                                        <url>http://${docker.host.address}:${swarm.port}/hello</url>
                                         <!-- Change this to 200 when the URL above hits an endpoint -->
                                         <status>200</status>
                                     </http>
@@ -158,6 +137,4 @@
             </plugin>
         </plugins>
     </build>
-
-
 </project>
