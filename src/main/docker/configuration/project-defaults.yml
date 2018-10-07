@@ -1,0 +1,21 @@
+swarm:
+  logging:
+    pattern-formatters:
+      LOG_FORMATTER:
+        pattern: "%d{ISO8601} %p %m (%t) %c{1} - %X{correlationId} - %m%n"
+    periodic-rotating-file-handlers:
+      FILE:
+        level: DEBUG
+        autoflush: true
+        encoding: UTF-8
+        file:
+          path: /opt/swarm/log/demoswarm.log
+        suffix: .yyyy-MM-dd
+        named-formatter: LOG_FORMATTER
+    root-logger:
+      handlers:
+      - CONSOLE
+      - FILE
+    loggers:
+      hr.tstrelar.swarmapp.rest:
+        level: DEBUG

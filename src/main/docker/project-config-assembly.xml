@@ -1,0 +1,18 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+
+    <!--<fileSets>-->
+        <!--<fileSet>-->
+            <!--<useDefaultExcludes>false</useDefaultExcludes>-->
+            <!--<directory>src/main/docker/configuration</directory>-->
+            <!--<outputDirectory>.</outputDirectory>-->
+            <!--<lineEnding>unix</lineEnding>-->
+        <!--</fileSet>-->
+    <!--</fileSets>-->
+    <files>
+        <file>
+            <source>src/main/docker/configuration/project-defaults.yml</source>
+        </file>
+    </files>
+
+</assembly>

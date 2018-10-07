@@ -4,14 +4,17 @@
     <groupId>hr.tstrelar</groupId>
     <artifactId>swarm-app</artifactId>
     <name>Thorntail Example</name>
-    <version>1.0.14-SNAPSHOT</version>
+    <version>1.0.49-SNAPSHOT</version>
     <packaging>war</packaging>
 
-    <!-- Deploy with, for example: mvn release:update-versions clean package docker:build docker:start -Ddocker.follow -->
+    <!-- Deploy with, for example: >mvn release:update-versions clean package docker:build docker:start -Ddocker.follow -Dswarm.logging=DEBUG  -->
     <!-- Version will be reflected in the resulting image -->
+    <!-- docker.follow will force maven to run until the server is shutdown -->
+    <!-- swarm.logging - set desired jboss logging level -->
 
     <properties>
-        <version.wildfly.swarm>2.2.0.Final</version.wildfly.swarm>
+        <version.thorntail>2.2.0.Final</version.thorntail>
+        <version.thorntail.fraction-plugin>90</version.thorntail.fraction-plugin>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <failOnMissingWebXml>false</failOnMissingWebXml>
@@ -20,7 +23,7 @@
         <docker.from>fabric8/java-jboss-openjdk8-jdk:1.4.0</docker.from>
         <docker.assemblyDescriptorRef>artifact</docker.assemblyDescriptorRef>
         <docker.image.app>tstrelar/demo-app:${project.version}</docker.image.app>
-        <docker.base.dir>/opt/swarm</docker.base.dir>
+        <docker.base.dir>/opt/swarm/</docker.base.dir>
         <docker.host.address>127.0.0.1</docker.host.address>
         <swarm.port>8080</swarm.port>
     </properties>
@@ -30,7 +33,7 @@
             <dependency>
                 <groupId>io.thorntail</groupId>
                 <artifactId>bom</artifactId>
-                <version>${version.wildfly.swarm}</version>
+                <version>${version.thorntail}</version>
                 <scope>import</scope>
                 <type>pom</type>
             </dependency>
@@ -41,8 +44,14 @@
         <dependency>
             <groupId>io.thorntail.servers</groupId>
             <artifactId>microprofile</artifactId>
-            <version>${version.wildfly.swarm}</version>
+            <version>${version.thorntail}</version>
         </dependency>
+        <dependency>
+            <groupId>io.thorntail</groupId>
+            <artifactId>logging</artifactId>
+            <version>${version.thorntail}</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -51,12 +60,16 @@
             <plugin>
                 <groupId>io.thorntail</groupId>
                 <artifactId>thorntail-maven-plugin</artifactId>
-                <version>${version.wildfly.swarm}</version>
+                <version>${version.thorntail}</version>
                 <configuration>
                     <properties>
                         <swarm.bind.address>0.0.0.0</swarm.bind.address>
                         <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
                     </properties>
+                    <!--<jvmArguments>-->
+                        <!--<jvmArgument>-Dlog4j.configuration=resources/log4j.xml</jvmArgument>-->
+                        <!--<jvmArgument>-Dorg.apache.logging.log4j.simplelog.StatusLogger.level=TRACE</jvmArgument>-->
+                    <!--</jvmArguments>-->
                 </configuration>
                 <executions>
                     <execution>
@@ -70,6 +83,21 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>io.thorntail</groupId>
+                <artifactId>thorntail-fraction-plugin</artifactId>
+                <version>${version.thorntail.fraction-plugin}</version>
+                <executions>
+                    <execution>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -90,7 +118,9 @@
                                         <!-- https://github.com/fabric8io-images/java/blob/master/images/jboss/openjdk8/jdk/run-java.sh#L162-L175  -->
                                         <arg>/deployments/run-java.sh</arg>
                                         <!-- thin application -->
-                                        <arg>${docker.base.dir}/${project.artifactId}-${project.version}.war</arg>
+                                        <arg>${docker.base.dir}${project.artifactId}-${project.version}.war</arg>
+                                        <arg>-s</arg>
+                                        <arg>${docker.base.dir}project-defaults.yml</arg>
                                 </entryPoint>
                                 <assembly>
                                     <inline>
@@ -103,15 +133,22 @@
                                                 </includes>
                                             </dependencySet>
                                         </dependencySets>
+                                        <files>
+                                            <file>
+                                                <source>src/main/docker/configuration/project-defaults.yml</source>
+                                            </file>
+                                        </files>
                                     </inline>
+
                                     <user>jboss:jboss:jboss</user>
                                     <basedir>${docker.base.dir}</basedir>
                                 </assembly>
+
                             </build>
                             <run>
                                 <env>
                                     <!-- https://developers.redhat.com/blog/2017/03/14/java-inside-docker/ -->
-                                    <JAVA_APP_JAR>${docker.base.dir}/${project.artifactId}-${project.version}-hollow-thorntail.jar</JAVA_APP_JAR>
+                                    <JAVA_APP_JAR>${docker.base.dir}${project.artifactId}-${project.version}-hollow-thorntail.jar</JAVA_APP_JAR>
                                     <AB_OFF>true</AB_OFF>
                                 </env>
                                 <ports>
@@ -126,10 +163,6 @@
                                     </http>
                                     <time>30000</time>
                                 </wait>
-                                <log>
-                                    <color>yellow</color>
-                                    <prefix>SWARM</prefix>
-                                </log>
                             </run>
                         </image>
                     </images>
