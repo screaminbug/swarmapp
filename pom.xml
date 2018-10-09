@@ -4,7 +4,7 @@
     <groupId>hr.tstrelar</groupId>
     <artifactId>swarm-app</artifactId>
     <name>Thorntail Example</name>
-    <version>1.0.49-SNAPSHOT</version>
+    <version>1.0.52-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <!-- Deploy with, for example: >mvn release:update-versions clean package docker:build docker:start -Ddocker.follow -Dswarm.logging=DEBUG  -->
@@ -53,6 +53,22 @@
         </dependency>
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jboss-public-repository-group</id>
+            <name>JBoss Public Repository Group</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public/</url>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <finalName>${project.artifactId}</finalName>
