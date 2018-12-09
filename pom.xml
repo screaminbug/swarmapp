@@ -4,7 +4,7 @@
     <groupId>hr.tstrelar</groupId>
     <artifactId>swarm-app</artifactId>
     <name>Thorntail Example</name>
-    <version>1.0.57-SNAPSHOT</version>
+    <version>1.0.69-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <!-- Deploy with, for example: >mvn release:update-versions clean package docker:build docker:start -Ddocker.follow -Dswarm.logging=DEBUG  -->
@@ -20,9 +20,9 @@
         <failOnMissingWebXml>false</failOnMissingWebXml>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <docker.maven.plugin.version>0.27.1</docker.maven.plugin.version>
-        <docker.from>fabric8/java-jboss-openjdk8-jdk:1.4.0</docker.from>
+        <docker.from>screaminbug/demo-app:1.0.57-SNAPSHOT</docker.from>
         <docker.assemblyDescriptorRef>artifact</docker.assemblyDescriptorRef>
-        <docker.image.app>tstrelar/demo-app:${project.version}</docker.image.app>
+        <docker.image.app>screaminbug/hello-app:${project.version}</docker.image.app>
         <docker.base.dir>/opt/swarm/</docker.base.dir>
         <docker.host.address>127.0.0.1</docker.host.address>
         <swarm.port>8080</swarm.port>
@@ -129,7 +129,6 @@
                                                 <useProjectAttachments>true</useProjectAttachments>
                                                 <includes>
                                                     <include>${project.groupId}:${project.artifactId}:war</include>
-                                                    <include>${project.groupId}:${project.artifactId}:jar</include>
                                                 </includes>
                                             </dependencySet>
                                         </dependencySets>
@@ -148,7 +147,8 @@
                             <run>
                                 <env>
                                     <!-- https://developers.redhat.com/blog/2017/03/14/java-inside-docker/ -->
-                                    <JAVA_APP_JAR>${docker.base.dir}${project.artifactId}-${project.version}-hollow-thorntail.jar</JAVA_APP_JAR>
+                                    <!--<JAVA_APP_JAR>${docker.base.dir}${project.artifactId}-${project.version}-hollow-thorntail.jar</JAVA_APP_JAR>-->
+                                    <JAVA_APP_JAR>/opt/swarm/swarm-app-1.0.57-SNAPSHOT-hollow-thorntail.jar</JAVA_APP_JAR>
                                     <AB_OFF>true</AB_OFF>
                                 </env>
                                 <ports>

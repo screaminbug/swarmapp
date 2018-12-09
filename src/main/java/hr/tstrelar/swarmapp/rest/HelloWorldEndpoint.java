@@ -8,10 +8,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.util.Date;
 
 
-@Path("/hello")
+@Path("/")
 public class HelloWorldEndpoint {
 
 	private static Logger log = Logger.getLogger(HelloWorldEndpoint.class);
@@ -24,6 +25,7 @@ public class HelloWorldEndpoint {
 			description = "Greetings that were given using any method",
 			monotonic=true,
 			reusable=true)
+	@Path("hello")
 	public Data doGet() {
 		log.info("I was invoked, better say hello...");
 		return Data.Builder.create()
@@ -32,5 +34,17 @@ public class HelloWorldEndpoint {
 				.id(43)
 				.text("This is THE text")
 				.build();
+	}
+
+	@GET
+	@Produces(MediaType.TEXT_PLAIN)
+	@Counted(name="goodbye.counter",
+			displayName = "The times a goodbye was said",
+		monotonic = true,
+	reusable = false)
+	@Path("goodbye")
+	public String doGoodbye() {
+		log.info("Time to say goodbye");
+		return "A Plain goodbye";
 	}
 }

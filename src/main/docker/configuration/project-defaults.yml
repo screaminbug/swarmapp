@@ -2,7 +2,7 @@ swarm:
   logging:
     pattern-formatters:
       LOG_FORMATTER:
-        pattern: "%d{ISO8601} %p %m (%t) %c{1} - %X{correlationId} - %m%n"
+        pattern: "%d %p %m (%t) %c{1} - %X - %m%n"
     periodic-rotating-file-handlers:
       FILE:
         level: DEBUG
