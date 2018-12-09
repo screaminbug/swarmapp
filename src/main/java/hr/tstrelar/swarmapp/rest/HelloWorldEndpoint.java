@@ -1,6 +1,8 @@
 package hr.tstrelar.swarmapp.rest;
 
 
+import hr.tstrelar.swarmapp.rest.model.Data;
+import hr.tstrelar.swarmapp.rest.model.Sqrt;
 import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.jboss.logging.Logger;
 
@@ -9,7 +11,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Date;
 
 
@@ -41,8 +42,7 @@ public class HelloWorldEndpoint {
 	@Produces(MediaType.TEXT_PLAIN)
 	@Counted(name="goodbye.counter",
 			displayName = "The times a goodbye was said",
-		monotonic = true,
-	reusable = false)
+		monotonic = true)
 	@Path("goodbye")
 	public String doGoodbye() {
 		log.info("Time to say goodbye");
@@ -53,11 +53,10 @@ public class HelloWorldEndpoint {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Counted(name="sqrt.counter",
 			displayName = "The times a square root was calculated",
-			monotonic = true,
-			reusable = false)
+			monotonic = true)
 	@Path("sqrt/{value}")
 	public Sqrt doSqrt(@PathParam("value") Double value) {
-		log.info("Calculating square root of");
+		log.info("Calculating square root of " + value);
 		return new Sqrt(value);
 	}
 }

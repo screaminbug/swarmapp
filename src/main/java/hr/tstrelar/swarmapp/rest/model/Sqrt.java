@@ -1,10 +1,13 @@
-package hr.tstrelar.swarmapp.rest;
+package hr.tstrelar.swarmapp.rest.model;
 
 public class Sqrt {
-    double answer;
+    private String operation = "Square root of ";
+    private double answer;
+
 
     public Sqrt(double problem) {
         this.answer = Math.sqrt(problem);
+        this.operation += problem;
     }
 
     public double getAnswer() {
@@ -13,5 +16,9 @@ public class Sqrt {
 
     public void setAnswer(double answer) {
         this.answer = answer;
+    }
+
+    public String getOperation() {
+        return operation;
     }
 }

@@ -1,4 +1,4 @@
-package hr.tstrelar.swarmapp.rest;
+package hr.tstrelar.swarmapp.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -11,7 +11,7 @@ public class Data {
     private final String someText;
     private final double someDouble;
 
-    public Data(int id, Date currentDate, String someText, double someDouble) {
+    private Data(int id, Date currentDate, String someText, double someDouble) {
         this.id = id;
         this.currentDate = currentDate;
         this.someText = someText;
