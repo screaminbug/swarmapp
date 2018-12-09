@@ -3,6 +3,7 @@ package hr.tstrelar.swarmapp.rest;
 
 import hr.tstrelar.swarmapp.rest.model.Data;
 import hr.tstrelar.swarmapp.rest.model.Sqrt;
+import hr.tstrelar.swarmapp.rest.model.Square;
 import org.eclipse.microprofile.metrics.annotation.Counted;
 import org.jboss.logging.Logger;
 
@@ -58,5 +59,16 @@ public class HelloWorldEndpoint {
 	public Sqrt doSqrt(@PathParam("value") Double value) {
 		log.info("Calculating square root of " + value);
 		return new Sqrt(value);
+	}
+
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	@Counted(name="square.counter",
+			displayName = "The times a square of a number was calculated",
+			monotonic = true)
+	@Path("square/{value}")
+	public Square doSquare(@PathParam("value") Double value) {
+		log.info("Calculating square root of " + value);
+		return new Square(value);
 	}
 }
